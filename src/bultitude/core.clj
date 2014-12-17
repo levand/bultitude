@@ -12,11 +12,13 @@
 
 (defn- clj? [^File f]
   (and (not (.isDirectory f))
-       (.endsWith (.getName f) ".clj")))
+       (or (.endsWith (.getName f) ".clj")
+           (.endsWith (.getName f) ".cljc"))))
 
 (defn- clj-jar-entry? [^JarEntry f]
   (and (not (.isDirectory f))
-       (.endsWith (.getName f) ".clj")))
+       (or (.endsWith (.getName f) ".clj")
+           (.endsWith (.getName f) ".cljc"))))
 
 (defn- jar? [^File f]
   (and (.isFile f) (.endsWith (.getName f) ".jar")))
@@ -154,13 +156,14 @@
   [& args]
   (map second (apply namespace-forms-on-classpath args)))
 
-(defn path-for
-  "Transform a namespace into a .clj file path relative to classpath root."
+(defn paths-for
+  "Transform a namespace into a set of possible file paths relative to classpath root."
   [namespace]
-  (str (-> (str namespace)
-           (.replace \- \_)
-           (.replace \. \/))
-       ".clj"))
+  (set (map (fn [extension]
+              (str (-> (str namespace)
+                       (.replace \- \_)
+                       (.replace \. \/))
+                   extension)) #{".clj" ".cljc"})))
 
 (defn doc-from-ns-form
   "Extract the docstring from a given ns form without evaluating the form. The docstring returned should be the return value of (:doc (meta namespace-symbol)) if the ns-form were to be evaluated."
